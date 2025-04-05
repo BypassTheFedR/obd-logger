@@ -1,0 +1,75 @@
+# F-150 OBD Data Logger - Project Requirements
+
+## 1. System Boot Behavior
+1.1 Automatically connect to the OBD-II scanner on boot
+1.2 Re-attempt connection if the OBD device is temporarily unavailable
+
+## 2. Data Collection
+2.1 Collect relevant OBD-II data related to idle shuddering
+2.2 Logging occurs on a configurable frequency (stored in config.py)
+2.3 Data is timestamped and saved to file (e.g., CSV or SQLite)
+2.4 Option to flag events (e.g., “shudder occurred now”) via UI
+
+## 3. Web Interface (Flask)
+3.1 After boot, system checks if it's connected to the home Wi-Fi network:
+     - If yes, host Flask on home network IP
+     - If not, create a fallback Wi-Fi hotspot (AP mode)
+       - Serve Flask UI from the Pi’s IP in AP mode
+       - Log any devices that connect to the hotspot (MAC address, time)
+3.2 Display live sensor data (see Section 5)
+3.3 Include controls for:
+     - Starting/stopping data collection
+     - Flagging a shudder event
+     - Viewing logs
+3.4 Should be accessible from a mobile device (responsive design)
+3.5 Display a connection status
+
+## 4. Error Code Handling (DTCs)
+4.1 Check for error codes on a configurable schedule
+4.2 Store error codes with timestamp and mileage in a separate CSV file
+4.3 Web interface has a dedicated “Error Codes” page that:
+     - Displays current and recent codes
+     - Shows “No recent error codes” if none
+     - Allows user to clear permanent error codes
+     - Displays time and mileage since last clear
+
+## 5. Sensor Data to Collect (Finalized - Phase 1)
+The following PIDs should be collected at a configurable frequency and logged with timestamps.
+
+### 💣 Core Idle/Combustion Indicators
+5.1 RPM – Engine revolutions per minute
+5.2 STFT_1 – Short-term fuel trim (bank 1)
+5.3 LTFT_1 – Long-term fuel trim (bank 1)
+5.4 LOAD – Engine load percentage
+5.5 TIMING_ADVANCE – Ignition timing advance
+5.6 O2_B1S1 – Oxygen sensor voltage (pre-cat, bank 1)
+5.7 MAF – Mass air flow sensor reading
+
+### 🌡️ Environmental Inputs
+5.8 MAP – Manifold absolute pressure
+5.9 IAT – Intake air temperature
+5.10 THROTTLE_POS – Throttle position percentage
+
+### ⚠️ Conditional / Advanced (Phase 2)
+5.11 Mode 06 Misfire Test Results – If supported by vehicle and adapter
+
+## 6. Data Management
+6.1 CSV log files stored under /data with timestamped filenames
+6.2 Files are downloadable via the web interface
+6.3 Configurations (logging frequency, monitored PIDs, network SSID, etc.) stored in config.py
+
+## 7. Future Considerations
+7.1 Add support for GPS logging
+7.2 Add basic plotting/graphing of recent data
+7.3 Email or push notification when certain thresholds are crossed
+
+## 8. Networking & Access Control
+8.1 System attempts to connect to a configured Wi-Fi network on boot
+8.2 If unsuccessful, Pi creates its own Wi-Fi hotspot
+     - SSID: (configurable, e.g., "F150-Diagnostics")
+     - Password: (configurable in config.py)
+8.3 Flask server auto-starts in either mode
+8.4 Log client connections to the hotspot:
+     - MAC address
+     - Timestamp of connection
+     - Device name if resolvable
