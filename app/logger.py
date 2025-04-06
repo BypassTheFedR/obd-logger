@@ -4,7 +4,9 @@ import os
 import datetime
 from threading import Thread
 import time
-from app.obd_interface import get_obd_connection, get_latest_data
+from app.obd_interface import get_obd_connection, get_latest_data, get_vehicle_vin, filtered_pids
+
+cached_vin = None
 
 # # Add root directory to path {Development}
 # sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
@@ -15,6 +17,7 @@ from config import LOG_INTERVAL, PIDS_TO_WATCH, SHUDDER_RPM_THRESHOLD, SHUDDER_D
 last_shudder_time = 0
 
 def log_loop():
+    global cached_vin
 
     # Checks for data directory, creates if it doesn't exist
     os.makedirs("data",exist_ok=True)
@@ -35,8 +38,11 @@ def log_loop():
                 log_shudder_event("auto: rpm dip at idle")
                 last_shudder_time = time.time()
 
+            cached_vin = get_vehicle_vin()
+            safe_vin = cached_vin.replace(":", "_").replace(" ", "_").replace("/", "_")
             today = datetime.date.today().isoformat()  # e.g. '2025-04-04'
-            file_path = f"data/obd_log_{today}.csv"
+            
+            file_path = f"data/obd_log_{today}_{safe_vin}.csv"
 
             file_exists = os.path.isfile(file_path)
 
@@ -45,12 +51,14 @@ def log_loop():
 
                 # Write header row one time
                 if not file_exists:
-                    header = ['timestamp'] + [cmd.name for cmd in PIDS_TO_WATCH]
+                    
+                    writer.writerow(["# VIN: {cached_vin}"])
+                    header = ['timestamp'] + [cmd.name for cmd in filtered_pids]
                     writer.writerow(header)
 
                 # Build row
                 timestamp = datetime.datetime.now().isoformat()
-                row = [timestamp] + [data.get(cmd.name) for cmd in PIDS_TO_WATCH]
+                row = [timestamp] + [data.get(cmd.name) for cmd in filtered_pids]
                 writer.writerow(row)
                 file.flush()
                    

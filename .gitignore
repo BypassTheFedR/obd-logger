@@ -8,3 +8,12 @@ __pycache__/
 
 # Data logs
 data/
+
+# Personal files
+OBD_Notes.txt
+
+# These are garbage test files
+# using get_dtc.py
+import obd.py
+import sys.py
+

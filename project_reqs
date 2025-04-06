@@ -38,16 +38,16 @@ The following PIDs should be collected at a configurable frequency and logged wi
 
 ### 💣 Core Idle/Combustion Indicators
 5.1 RPM – Engine revolutions per minute
-5.2 STFT_1 – Short-term fuel trim (bank 1)
-5.3 LTFT_1 – Long-term fuel trim (bank 1)
+5.2 SHORT_FUEL_TRIM_1 – Short-term fuel trim (bank 1) 
+5.3 LONG_FUEL_TRIM_1 – Long-term fuel trim (bank 1)
 5.4 LOAD – Engine load percentage
 5.5 TIMING_ADVANCE – Ignition timing advance
 5.6 O2_B1S1 – Oxygen sensor voltage (pre-cat, bank 1)
 5.7 MAF – Mass air flow sensor reading
 
 ### 🌡️ Environmental Inputs
-5.8 MAP – Manifold absolute pressure
-5.9 IAT – Intake air temperature
+5.8 INTAKE_PRESSURE – Manifold absolute pressure
+5.9 INTAKE_TEMP – Intake air temperature
 5.10 THROTTLE_POS – Throttle position percentage
 
 ### ⚠️ Conditional / Advanced (Phase 2)

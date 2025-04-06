@@ -8,7 +8,7 @@ def main():
     start_connection_thread()
 
     print("Starting data logger...")
-    start_logging_thread
+    start_logging_thread()
 
     print("Systems is running. Press Ctrl+C to exit.")
 
