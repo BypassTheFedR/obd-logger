@@ -1,0 +1,22 @@
+f150-obd-logger/
+│
+├── app/                      # Flask application code
+│   ├── __init__.py           # Create Flask app, setup routes
+│   ├── routes.py             # Web interface routes
+│   ├── obd_interface.py      # OBD-II data polling logic
+│   ├── logger.py             # Logging to file/database
+│   ├── utils.py              # Helper functions (timestamps, formatters)
+│   ├── web_interface.py      # (Optional) Standalone Flask runner for development
+│   └── templates/
+│       └── dashboard.html    # Web interface (Flask Jinja2)
+│
+├── static/                   # CSS, JS for the frontend
+│   └── style.css
+│
+├── data/                     # Logged data files (CSV or SQLite)
+│   └── obd_log_YYYYMMDD.csv
+│
+├── config.py                 # Configs: logging interval, OBD settings
+├── run.py                    # Entry point to start the Flask app
+├── requirements.txt          # Python dependencies
+└── README.md                 # Setup instructions
