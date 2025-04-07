@@ -9,8 +9,8 @@ if not connection.is_connected():
     print("❌ OBD-II adapter not connected. Check Bluetooth and try again.")
     exit()
 
-# clear the code
-obd.commands.CLEAR_DTC
+# *DANGER* clear the code 
+# *DANGER* obd.commands.CLEAR_DTC
 
 
 # Read stored (active) DTCs (Mode 03)
