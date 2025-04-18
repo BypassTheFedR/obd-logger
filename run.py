@@ -1,7 +1,32 @@
-from app import create_app
-from config import WEB_PORT
+import logging
+import os
+from app.obd_interface import start_connection_thread
+from app.logger import start_logging_thread
+import time
 
-app = create_app()
+# Setup logging
+os.makedirs("logs", exist_ok=True)
+logging.basicConfig(
+    filename="logs/runtime.log",
+    filemode="a",
+    format="%(asctime)s [%(levelname)s] %(message)s",
+    level=logging.INFO
+)
+
+def main():
+    logging.info("Starting OBD connection thread.")
+    start_connection_thread()
+
+    logging.info("Starting data logger thread...")
+    start_logging_thread()
+
+    logging.info("System running.")
+
+    try:
+        while True:
+            time.sleep(1)
+    except KeyboardInterrupt:
+        logging.info("Shutting down due to keyboard interrupt.")
 
 if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=WEB_PORT, debug=True)
+    main()

@@ -1,31 +1,53 @@
 import obd
 import time
+import logging
 from threading import Thread
-from config import PIDS_TO_WATCH
+from config import (
+    PIDS_TO_WATCH,
+    OBD_RETRY_FAST_INTERVAL,
+    OBD_RETRY_SLOW_INTERVAL,
+    OBD_RETRY_FAST_DURATION,
+    OBD_PORT
+)
 
 connection = None
-connected =False
+connected = False
 data_buffer = {}
 filtered_pids = []
 
 def try_connect():
     global connection, connected, filtered_pids
-    while not connected:
-        try:
-            connection = obd.Async()
-            connected = connection.is_connected()
-            if connected:
-                print("OBD-II connected!")
 
-                filtered_pids = [pid for pid in PIDS_TO_WATCH if pid in connection.supported_commands]
-                print(f"Filtered PIDs ({len(filtered_pids)}):", [pid.name for pid in filtered_pids])
+    start_time = time.time()
+    
+    while True:
+        if not connected:
+            try:
+                logging.info("[OBD] Attempting to connect...")
+                connection = obd.Async(portstr=OBD_PORT, fast=False)
+                connected = connection.is_connected()
 
-                setup_async_watchers()
+                if connected:
+                    logging.info("[OBD] Connected to OBD-II adapter.")
+                    filtered_pids = [pid for pid in PIDS_TO_WATCH if pid in connection.supported_commands]
+                    logging.info(f"[OBD] Watching {len(filtered_pids)} supported PIDs: {[pid.name for pid in filtered_pids]}")
+                    setup_async_watchers()
+                    start_time = time.time()
+                else:
+                    logging.warning("[OBD] Connection failed.")
+            except Exception as e:
+                logging.error(f"[OBD] Exception during connection: {e}")
+            
+            elapsed = time.time() - start_time
+            if elapsed < OBD_RETRY_FAST_DURATION:
+                time.sleep(OBD_RETRY_FAST_INTERVAL)
             else:
-                print("OBD-II not connected, retrying.")
-        except Exception as e:
-            print(f"Connection error: {e}")
-        time.sleep(3) # wait before retrying
+                time.sleep(OBD_RETRY_SLOW_INTERVAL)
+        else:
+            if not connection.is_connected():
+                logging.warning("[OBD] Lost connection. Will attempt to reconnect...")
+                connected = False
+                connection.close()
 
 def start_connection_thread():
     t = Thread(target=try_connect, daemon=True)
@@ -57,5 +79,3 @@ def get_vehicle_vin():
         if response and response.value:
             return str(response.value)
     return "Unknown VIN"
-
-

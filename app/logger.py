@@ -1,30 +1,39 @@
 import csv
-import sys
+import logging
 import os
 import datetime
 from threading import Thread
 import time
 from app.obd_interface import get_obd_connection, get_latest_data, get_vehicle_vin, filtered_pids
-
-cached_vin = None
-
-# # Add root directory to path {Development}
-# sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
-# import config
-
 from config import LOG_INTERVAL, PIDS_TO_WATCH, SHUDDER_RPM_THRESHOLD, SHUDDER_DEBOUNCE_SECONDS
 
+cached_vin = None
 last_shudder_time = 0
 
 def log_loop():
     global cached_vin
-
-    # Checks for data directory, creates if it doesn't exist
-    os.makedirs("data",exist_ok=True)
+    os.makedirs("data", exist_ok=True)
 
     while True:
         if get_obd_connection():
             data = get_latest_data()
+            today = datetime.date.today().isoformat()
+            file_path = f"data/obd_log_{today}.csv"
+            file_exists = os.path.isfile(file_path)
+
+            with open(file_path, 'a', newline='') as file:
+                writer = csv.writer(file)
+
+                # Write the header row if necessary
+                if not file_exists:
+                    writer.writerow(['timestamp'] + [cmd.name for cmd in filtered_pids])
+
+                # Write data at intervals
+                timestamp = datetime.datetime.now().isoformat()
+                row = [timestamp] + [data.get(cmd.name) for cmd in filtered_pids]
+                writer.writerow(row)
+                file.flush()
+
             rpm = data.get("RPM")
             speed = data.get("SPEED")
 
@@ -38,33 +47,12 @@ def log_loop():
                 log_shudder_event("auto: rpm dip at idle")
                 last_shudder_time = time.time()
 
-            cached_vin = get_vehicle_vin()
-            safe_vin = cached_vin.replace(":", "_").replace(" ", "_").replace("/", "_")
-            today = datetime.date.today().isoformat()  # e.g. '2025-04-04'
-            
-            file_path = f"data/obd_log_{today}_{safe_vin}.csv"
+            if not cached_vin:
+                cached_vin = get_vehicle_vin()
+                logging.info(f"[LOG] Detected VIN: {cached_vin}")
 
-            file_exists = os.path.isfile(file_path)
-
-            with open(file_path, 'a', newline='') as file:
-                writer = csv.writer(file)
-
-                # Write header row one time
-                if not file_exists:
-                    
-                    writer.writerow(["# VIN: {cached_vin}"])
-                    header = ['timestamp'] + [cmd.name for cmd in filtered_pids]
-                    writer.writerow(header)
-
-                # Build row
-                timestamp = datetime.datetime.now().isoformat()
-                row = [timestamp] + [data.get(cmd.name) for cmd in filtered_pids]
-                writer.writerow(row)
-                file.flush()
-                   
         time.sleep(LOG_INTERVAL)
 
-# dedicated thread for the logging loop. This lets us automatically shutdown this loop if the main app quits.
 def start_logging_thread():
     t = Thread(target=log_loop, daemon=True)
     t.start()
@@ -77,6 +65,8 @@ def log_shudder_event(message="shudder observed"):
     data = get_latest_data()
     rpm = data.get("RPM", "N/A")
     timestamp = datetime.datetime.now().isoformat()
+
+    logging.info(f"[SHUDDER] {message} - RPM: {rpm}")
 
     with open(file_path, 'a', newline='') as file:
         writer = csv.writer(file)
