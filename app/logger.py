@@ -4,7 +4,7 @@ import os
 import datetime
 from threading import Thread
 import time
-from app.obd_interface import get_obd_connection, get_latest_data, get_vehicle_vin, filtered_pids
+from app.obd_interface import get_obd_connection, get_latest_data, get_vehicle_vin, get_filtered_pids
 from config import LOG_INTERVAL, PIDS_TO_WATCH, SHUDDER_RPM_THRESHOLD, SHUDDER_DEBOUNCE_SECONDS
 
 cached_vin = None
@@ -25,18 +25,19 @@ def log_loop():
 
             with open(file_path, 'a', newline='') as file:
                 writer = csv.writer(file)
+                current_pids = get_filtered_pids()
 
                 # Write the header row if necessary
                 if not file_exists:
-                    writer.writerow(['timestamp'] + [cmd.name for cmd in filtered_pids])
+                    writer.writerow(['timestamp'] + [cmd.name for cmd in current_pids])
 
                 # Write data at intervals
                 timestamp = datetime.datetime.now().isoformat()
 
-                row = [timestamp] + [data.get(cmd.name, "N/A") for cmd in filtered_pids]
-                logging.debug(f"[LOG] Writing row: {row}")
-                logging.debug(f"[LOG] Current data: {data}")
-                logging.debug(f"[LOG] Filtered PIDs: {[cmd.name for cmd in filtered_pids]}")        
+                row = [timestamp] + [data.get(cmd.name, "N/A") for cmd in current_pids]
+                # logging.debug(f"[LOG] Writing row: {row}")
+                # logging.debug(f"[LOG] Current data: {data}")
+                # logging.debug(f"[LOG] Filtered PIDs: {[cmd.name for cmd in filtered_pids]}")        
 
                 writer.writerow(row)
                 file.flush()
