@@ -12,6 +12,8 @@ last_shudder_time = 0
 
 def log_loop():
     global cached_vin
+
+    time.sleep(2)
     os.makedirs("data", exist_ok=True)
 
     while True:
@@ -30,7 +32,12 @@ def log_loop():
 
                 # Write data at intervals
                 timestamp = datetime.datetime.now().isoformat()
-                row = [timestamp] + [data.get(cmd.name) for cmd in filtered_pids]
+
+                row = [timestamp] + [data.get(cmd.name, "N/A") for cmd in filtered_pids]
+                logging.debug(f"[LOG] Writing row: {row}")
+                logging.debug(f"[LOG] Current data: {data}")
+                logging.debug(f"[LOG] Filtered PIDs: {[cmd.name for cmd in filtered_pids]}")        
+
                 writer.writerow(row)
                 file.flush()
 
