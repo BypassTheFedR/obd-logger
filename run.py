@@ -7,10 +7,11 @@ import time
 # Setup logging
 os.makedirs("logs", exist_ok=True)
 logging.basicConfig(
+    level=logging.DEBUG,
     filename="logs/runtime.log",
     filemode="a",
-    format="%(asctime)s [%(levelname)s] %(message)s",
-    level=logging.INFO
+    format="%(asctime)s [%(levelname)s] %(message)s"
+    # level=logging.INFO
 )
 
 def main():
