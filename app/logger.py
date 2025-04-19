@@ -6,6 +6,7 @@ from threading import Thread
 import time
 from app.obd_interface import get_obd_connection, get_latest_data, get_vehicle_vin, get_filtered_pids
 from config import LOG_INTERVAL, SHUDDER_RPM_THRESHOLD, SHUDDER_DEBOUNCE_SECONDS
+import obd
 
 cached_vin = None
 last_shudder_time = 0
@@ -79,6 +80,17 @@ def log_shudder_event(message="shudder observed"):
     file_exists = os.path.isfile(file_path)
 
     data = get_latest_data()
+    conn = get_obd_connection()
+    freeze_frame = "N/A"
+
+    if conn:
+        try:
+            freeze = conn.query(obd.commands.FREEZE_DTC)
+            if freeze and freeze.value:
+                freeze_frame = ", ".join(freeze.value) if isinstance(freeze.value, list) else str(freeze.value)
+        except Exception as e:
+            logging.warning(f"[OBD] Error retrieving freeze frame DTC: {e}")
+
     rpm = data.get("RPM", "N/A")
     maf = data.get("MAF", "N/A")
     speed = data.get("SPEED", "N/A")
@@ -90,7 +102,7 @@ def log_shudder_event(message="shudder observed"):
 
     logging.warning(
         f"[SHUDDER] {message} - RPM: {rpm}, SPEED: {speed}, MAF: {maf} g/s, "
-        f"STFT1: {stft1}, LTFT1: {ltft1}, STFT2: {stft2}, LTFT2: {ltft2}"
+        f"STFT1: {stft1}, LTFT1: {ltft1}, STFT2: {stft2}, LTFT2: {ltft2}, FreezeFrame: {freeze_frame}"
     )
 
     with open(file_path, 'a', newline='') as file:
@@ -98,15 +110,23 @@ def log_shudder_event(message="shudder observed"):
         if not file_exists:
             writer.writerow([
                 "timestamp", "rpm", "speed", "maf",
-                "stft1", "ltft1", "stft2", "ltft2", "message"
+                "stft1", "ltft1", "stft2", "ltft2", "freeze_frame", "message"
             ])
         writer.writerow([
-            timestamp, rpm, speed, maf,
-            stft1, ltft1, stft2, ltft2, message
+            timestamp,
+            format_val(rpm),
+            format_val(speed),
+            format_val(maf),
+            format_val(stft1),
+            format_val(ltft1),
+            format_val(stft2),
+            format_val(ltft2),
+            freeze_frame,
+            message
         ])
         file.flush()
 
 def format_val(val):
     if isinstance(val, (int,float)):
         return round(val,2)
-    return val
+    return str(val)
