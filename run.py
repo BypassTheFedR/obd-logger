@@ -7,7 +7,7 @@ import time
 # Setup logging
 os.makedirs("logs", exist_ok=True)
 logging.basicConfig(
-    level=logging.DEBUG,
+    level=logging.INFO,
     filename="logs/runtime.log",
     filemode="a",
     format="%(asctime)s [%(levelname)s] %(message)s"

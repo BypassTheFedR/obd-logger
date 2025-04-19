@@ -2,6 +2,18 @@ import obd
 
 LOG_INTERVAL = 2 # seconds between logging events
 
+# Adding mis fire pids and then adding them to the filtered PIDS
+MISFIRE_PIDS = [
+    obd.commands.MONITOR_MISFIRE_CYLINDER_1,
+    obd.commands.MONITOR_MISFIRE_CYLINDER_2,
+    obd.commands.MONITOR_MISFIRE_CYLINDER_3,
+    obd.commands.MONITOR_MISFIRE_CYLINDER_4,
+    obd.commands.MONITOR_MISFIRE_CYLINDER_5,
+    obd.commands.MONITOR_MISFIRE_CYLINDER_6,
+    obd.commands.MONITOR_MISFIRE_CYLINDER_7,
+    obd.commands.MONITOR_MISFIRE_CYLINDER_8,  # If supported
+]
+
 # list of parameters to monitor/ log
 PIDS_TO_WATCH = [
     obd.commands.ENGINE_LOAD,
@@ -17,8 +29,10 @@ PIDS_TO_WATCH = [
     obd.commands.INTAKE_PRESSURE,
     obd.commands.INTAKE_TEMP,
     obd.commands.THROTTLE_POS,
-    obd.commands.SPEED
-]
+    obd.commands.SPEED,
+    obd.commands.MAF,
+    obd.commands.BAROMETRIC_PRESSURE
+] + MISFIRE_PIDS
 
 SHUDDER_RPM_THRESHOLD = 550
 SHUDDER_DEBOUNCE_SECONDS = 15
