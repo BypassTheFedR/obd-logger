@@ -39,7 +39,7 @@ def log_loop():
                 # Write data at intervals
                 timestamp = datetime.datetime.now().isoformat()
 
-                row = [timestamp] + [format_val(data.get(cmd.name, "N/A")) for cmd in current_pids]
+                row = [timestamp] + [format_val(data.get(cmd.name, "N/A")) for cmd in current_pids if "MISFIRE_CYLINDER" not in cmd.name]
 
                 writer.writerow(row)
                 file.flush()
