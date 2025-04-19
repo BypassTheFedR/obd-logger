@@ -44,12 +44,27 @@ def log_loop():
                 writer.writerow(row)
                 file.flush()
 
+                misfire_data = []
+
                 # Check for misfires
                 for cmd in get_filtered_pids():
                     if "MISFIRE_CYLINDER" in cmd.name:
                         value = data.get(cmd.name)
                         if hasattr(value, "misfire_count") and value.misfire_count > 0:
                             logging.warning(f"[MISFIRE] {cmd.name}: {value.misfire_count}")
+                            misfire_data.append([timestamp, cmd.name, value.misfire_count])
+                
+                if misfire_data:
+                    os.makedirs("data", exist_ok=True)
+                    misfire_path = "data/misfire_log.csv"
+                    file_exists = os.path.isfile(misfire_path)
+                    with open(misfire_path, 'a', newline='') as f:
+                        writer = csv.writer(f)
+                        if not file_exists:
+                            writer.writerow(["timestamp", "cylinder", "misfire_info"])
+                        writer.writerows(misfire_data)
+                        f.flush()
+                        logging.warning(f"[MISFIRE] Logged misfire(s): {misfire_data}")
 
             rpm = data.get("RPM")
             speed = data.get("SPEED")
