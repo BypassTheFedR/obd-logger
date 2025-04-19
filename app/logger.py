@@ -16,6 +16,10 @@ def log_loop():
     time.sleep(2)
     os.makedirs("data", exist_ok=True)
 
+    while not get_filtered_pids():
+        logging.debug("[LOG] Waiting for filtered PIDS...")
+        time.sleep(0.5)
+
     while True:
         if get_obd_connection():
             data = get_latest_data()
