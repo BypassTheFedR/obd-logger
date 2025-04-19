@@ -12,7 +12,7 @@ from config import (
 
 connection = None
 connected = False
-filtered_pids = []
+_filtered_pids = []
 
 def try_connect():
     global connection, connected, filtered_pids
@@ -28,10 +28,8 @@ def try_connect():
 
                 if connected:
                     logging.info("[OBD] Connected to OBD-II adapter.")
-                    filtered_pids = [
-                        pid for pid in PIDS_TO_WATCH if pid in connection.supported_commands
-                    ]
-                    logging.info(f"[OBD] Watching {len(filtered_pids)} supported PIDs: {[pid.name for pid in filtered_pids]}")
+                    set_filtered_pids([pid for pid in PIDS_TO_WATCH if pid in connection.supported_commands])
+                    logging.info(f"[OBD] Watching {len(get_filtered_pids())} supported PIDs: {[pid.name for pid in get_filtered_pids()]}")
                     start_time = time.time()
                 else:
                     logging.warning("[OBD] Connection failed.")
@@ -63,7 +61,7 @@ def get_latest_data():
         return {}
 
     data = {}
-    for cmd in filtered_pids:
+    for cmd in get_filtered_pids():
         try:
             response = conn.query(cmd)
             if response and response.value is not None:
@@ -88,3 +86,10 @@ def get_vehicle_vin():
         except Exception as e:
             logging.warning(f"[OBD] VIN query failed: {e}")
     return "Unknown VIN"
+
+def set_filtered_pids(pids):
+    global _filtered_pids
+    _filtered_pids = pids
+
+def get_filtered_pids():
+    return _filtered_pids
