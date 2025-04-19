@@ -12,37 +12,38 @@ from config import (
 
 connection = None
 connected = False
-data_buffer = {}
 filtered_pids = []
 
 def try_connect():
     global connection, connected, filtered_pids
 
     start_time = time.time()
-    
+
     while True:
         if not connected:
             try:
                 logging.info("[OBD] Attempting to connect...")
-                connection = obd.Async(portstr=OBD_PORT, fast=False)
+                connection = obd.OBD(portstr=OBD_PORT, fast=False)
                 connected = connection.is_connected()
 
                 if connected:
                     logging.info("[OBD] Connected to OBD-II adapter.")
-                    filtered_pids = [pid for pid in PIDS_TO_WATCH if pid in connection.supported_commands]
+                    filtered_pids = [
+                        pid for pid in PIDS_TO_WATCH if pid in connection.supported_commands
+                    ]
                     logging.info(f"[OBD] Watching {len(filtered_pids)} supported PIDs: {[pid.name for pid in filtered_pids]}")
-                    setup_async_watchers()
                     start_time = time.time()
                 else:
                     logging.warning("[OBD] Connection failed.")
             except Exception as e:
                 logging.error(f"[OBD] Exception during connection: {e}")
-            
+
             elapsed = time.time() - start_time
             if elapsed < OBD_RETRY_FAST_DURATION:
                 time.sleep(OBD_RETRY_FAST_INTERVAL)
             else:
                 time.sleep(OBD_RETRY_SLOW_INTERVAL)
+
         else:
             if not connection.is_connected():
                 logging.warning("[OBD] Lost connection. Will attempt to reconnect...")
@@ -57,25 +58,33 @@ def get_obd_connection():
     return connection if connected else None
 
 def get_latest_data():
-    return data_buffer.copy()
+    conn = get_obd_connection()
+    if not conn:
+        return {}
 
-def handle_response(cmd):
-    def callback(response):
-        if response and response.value is not None:
-            data_buffer[cmd.name] = response.value.magnitude
-        else:
-            data_buffer[cmd.name] = None
-    return callback
-
-def setup_async_watchers():
+    data = {}
     for cmd in filtered_pids:
-        connection.watch(cmd, callback=handle_response(cmd))
-    connection.start()
+        try:
+            response = conn.query(cmd)
+            if response and response.value is not None:
+                val = response.value.magnitude
+                data[cmd.name] = val
+                logging.debug(f"[DATA] {cmd.name} = {val}")
+            else:
+                data[cmd.name] = None
+                logging.debug(f"[DATA] {cmd.name} = None")
+        except Exception as e:
+            data[cmd.name] = None
+            logging.warning(f"[OBD] Failed to query {cmd.name}: {e}")
+    return data
 
 def get_vehicle_vin():
     conn = get_obd_connection()
     if conn:
-        response = conn.query(obd.commands.VIN)
-        if response and response.value:
-            return str(response.value)
+        try:
+            response = conn.query(obd.commands.VIN)
+            if response and response.value:
+                return str(response.value)
+        except Exception as e:
+            logging.warning(f"[OBD] VIN query failed: {e}")
     return "Unknown VIN"
