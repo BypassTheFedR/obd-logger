@@ -17,3 +17,8 @@ OBD_Notes.txt
 import obd.py
 import sys.py
 
+/data_analysis/
+
+*.png
+
+data_analysis.py
