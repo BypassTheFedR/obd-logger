@@ -10,9 +10,10 @@ import obd
 
 cached_vin = None
 last_shudder_time = 0
+vehicle_active = True
 
 def log_loop():
-    global cached_vin
+    global cached_vin, vehicle_active
 
     time.sleep(2)
     os.makedirs("data", exist_ok=True)
@@ -24,6 +25,16 @@ def log_loop():
     while True:
         if get_obd_connection():
             data = get_latest_data()
+            if not data:
+                if vehicle_active:
+                    logging.info("[OBD] Vehicle appears to be off or ECU asleep. Skipping data log.")
+                    vehicle_active = False
+                time.sleep(LOG_INTERVAL)
+                continue
+            else:
+                if not vehicle_active:
+                    logging.info("[OBD] Vehicle appears to be active again.")
+                    vehicle_active = True
             today = datetime.date.today().isoformat()
             file_path = f"data/obd_log_{today}.csv"
             file_exists = os.path.isfile(file_path)
@@ -55,12 +66,12 @@ def log_loop():
                             misfire_data.append([timestamp, cmd.name, value.misfire_count])
                 
                 if misfire_data:
-                    os.makedirs("data", exist_ok=True)
+                    # os.makedirs("data", exist_ok=True)
                     misfire_path = "data/misfire_log.csv"
-                    file_exists = os.path.isfile(misfire_path)
+                    misfire_file_exists = os.path.isfile(misfire_path)
                     with open(misfire_path, 'a', newline='') as f:
                         writer = csv.writer(f)
-                        if not file_exists:
+                        if not misfire_file_exists:
                             writer.writerow(["timestamp", "cylinder", "misfire_info"])
                         writer.writerows(misfire_data)
                         f.flush()
