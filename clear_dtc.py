@@ -36,7 +36,7 @@ def clear_dtc(connection):
     confirm = input("⚠️ Are you sure you want to clear all DTCs? (y/N): ").lower()
     if confirm == "y":
         response = connection.query(obd.commands.CLEAR_DTC)
-        print("✅ DTCs cleared." if response.is_successful() else "❌ Failed to clear DTCs.")
+        print("✅ DTCs cleared." if not response.is_null() else "❌ Failed to clear DTCs.")
     else:
         print("❎ DTC clear aborted.")
 
