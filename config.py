@@ -18,6 +18,8 @@ MISFIRE_PIDS = [
 PIDS_TO_WATCH = [
     obd.commands.ENGINE_LOAD,
     obd.commands.RPM,
+    obd.commands.COOLANT_TEMP,
+    obd.commands.FUEL_TEMP,
     obd.commands.SHORT_FUEL_TRIM_1,
     obd.commands.LONG_FUEL_TRIM_1,
     obd.commands.SHORT_FUEL_TRIM_2,
@@ -30,7 +32,6 @@ PIDS_TO_WATCH = [
     obd.commands.INTAKE_TEMP,
     obd.commands.THROTTLE_POS,
     obd.commands.SPEED,
-    obd.commands.MAF,
     obd.commands.BAROMETRIC_PRESSURE
 ] + MISFIRE_PIDS
 

@@ -35,9 +35,17 @@ def main():
     pending_dtc_response = connection.query(obd.commands.GET_CURRENT_DTC)
     print_codes("Pending Diagnostic Trouble Codes", pending_dtc_response)
 
-    # --- Read Permanent DTCs (Mode 0A)
-    if obd.commands.PERMANENT_DTC in connection.supported_commands:
-        permanent_dtc_response = connection.query(obd.commands.PERMANENT_DTC)
+    # --- Read Permanent DTCs (Mode 0A) --- BROKEN, DELETE AFTER CONFIRM IT WORKS.
+    # if obd.commands.PERMANENT_DTC in connection.supported_commands:
+    #     permanent_dtc_response = connection.query(obd.commands.PERMANENT_DTC)
+    #     print_codes("Permanent Diagnostic Trouble Codes", permanent_dtc_response)
+    # else:
+    #     print("⚠️ Permanent DTCs (Mode 0A) are not supported by this adapter or vehicle.")
+
+    # --- Read Permanent DTCs (Mode 0A) --- FIXED
+    if "0A" in connection.supported_commands:
+        permanent_cmd = obd.OBDCommand("PERMANENT_DTC", "Get permanent DTCs", b"0A", 6, obd.decoders.dtc)
+        permanent_dtc_response = connection.query(permanent_cmd)
         print_codes("Permanent Diagnostic Trouble Codes", permanent_dtc_response)
     else:
         print("⚠️ Permanent DTCs (Mode 0A) are not supported by this adapter or vehicle.")

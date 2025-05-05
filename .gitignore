@@ -22,3 +22,6 @@ import sys.py
 *.png
 
 data_analysis.py
+
+# Get_dtc.py is the one we want to use but I dont want to delete this one for ... reasons
+clear_dtc.py
